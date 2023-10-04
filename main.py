@@ -2,6 +2,8 @@ import requests
 import json
 import tkinter as tk
 from tkinter import ttk
+import os
+from dotenv import load_dotenv
 
 class CurrencyConverter(tk.Tk):
     def __init__(self, balance: int):
@@ -16,9 +18,8 @@ class CurrencyConverter(tk.Tk):
             self._allcurrenciesdata = self.fetch_currency_data()
 
     def fetch_currency_data(self):
-        app_id = "d6e7594e021a47f8a61ed137b6ca1adf" # Add your own app_id from openexchangerates.org here
         url = f"https://openexchangerates.org/api/latest.json?app_id={app_id}"
-        headers = {"accept": "application/json"} # This needs to be added, it tells the API that they should return JSON
+        headers = {"accept": "application/json"} 
         response = requests.get(url, headers=headers)
         data = response.json()
         print(data)
@@ -27,9 +28,10 @@ class CurrencyConverter(tk.Tk):
         return data
     
     def convert_from_usd(self, to_currency: str, amount: int):
-        app_id = "d6e7594e021a47f8a61ed137b6ca1adf" # Add your own app_id from openexchangerates.org here
-        url = f"https://openexchangerates.org/api/latest.json?app_id={app_id}"
-        headers = {"accept": "application/json"} # This needs to be added, it tells the API that they should return JSON
+        load_dotenv()
+        api_key = os.environ.get("API_KEY")
+        url = f"https://openexchangerates.org/api/latest.json?app_id={api_key}"
+        headers = {"accept": "application/json"} 
         response = requests.get(url, headers=headers)
         alldata = response.json()
         value = alldata["rates"][to_currency]
