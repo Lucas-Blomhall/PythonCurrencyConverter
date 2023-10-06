@@ -13,6 +13,14 @@ class CurrencyConverter(tk.Tk):
         self.title("Currency Converter")
         self.geometry("300x200")
         self._balance = balance
+
+        self.convert_from_usd_ccwindow_any_to_any = None
+        self.convert_from_usd_ccwindow = None
+        self.text_widget = None
+        self.convert_from_usd_ccwindow_any_to_any = None
+        self.convert_from_usd_ccwindow = None
+        self.back_button_convert_any = None
+
         try:
             self._allcurrenciesdata = self.load_currency_data()
         except:
@@ -33,6 +41,14 @@ class CurrencyConverter(tk.Tk):
         return data
     
     def convert_from_usd(self, to_currency: str, amount: int):
+        def clear_screen_convert():
+            convert_from_usd_ccwindow.pack_forget()
+            text_widget.pack_forget()
+            convert_from_usd_ccwindow_display.pack_forget()
+            convert_from_usd_ccwindow_any_to_any.pack_forget()
+            convert_from_usd_ccwindow.pack_forget()
+            back_button_convert.pack_forget()
+            go_back_to_main()
         hide_main_menu()
         display_currency_converter()
         logging.info('Starting: convert_from_usd')  
@@ -42,12 +58,15 @@ class CurrencyConverter(tk.Tk):
         response = requests.get(url, headers=headers)
         alldata = response.json()
         value = alldata["rates"][to_currency]
-        valuenumber = int(value)
-        print(f"Your choosen currency {to_currency} has a value of {valuenumber} on USD as base!")
+        valuenumber = float(value)
+        convert_from_usd_ccwindow_display = tk.Label(text=f"Your choosen currency {to_currency} has a value of {valuenumber} on USD as base!")
+        convert_from_usd_ccwindow_display.pack()
         newamount = amount * valuenumber
-        convert_from_usd_ccwindow = tk.Label(text=f"Your new amount is {newamount}")
+        intamount = int(newamount)
+        convert_from_usd_ccwindow = tk.Label(text=f"Your new amount is {intamount}")
         convert_from_usd_ccwindow.pack()
-        # back_button.pack()
+        back_button_convert = tk.Button(root, text="Clear and go back", command=clear_screen_convert, **button_style)
+        back_button_convert.pack()
     
     def list_currencies(self):
         logging.info('Starting: list_currencies')  
@@ -68,6 +87,13 @@ class CurrencyConverter(tk.Tk):
             text_widget.pack(pady=10, padx=10)
         
     def convert_any_currency(self, first_to_currency, last_to_currency, amount):
+        def clear_screen_convert_any():
+            text_widget.pack_forget()
+            convert_from_usd_ccwindow_any_to_any.pack_forget()
+            convert_from_usd_ccwindow.pack_forget()
+            back_button_convert_any.pack_forget()
+            go_back_to_main()
+        
         logging.info('Starting: convert_any_currency')  
         with open('openexchangerates.json', 'r') as file:
             data = json.load(file)
@@ -81,17 +107,20 @@ class CurrencyConverter(tk.Tk):
             try:
                 usd_base_value_1_to_any = 1 / first_value
             except:
-                logging.warning('Could not convert to currency!')  # will print a message to the console
-                logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG)
-                logging.debug('This message should go to the log file')
-                logging.info('So should this')
-                logging.warning('And this, too')
-                logging.error('And non-ASCII stuff, too, like Øresund and Malmö')
+                logging.warning('Could not convert to the currency!')
 
             usd_base_value_to_any = amount * usd_base_value_1_to_any
             newamount = usd_base_value_to_any * last_value_number
-            convert_from_usd_ccwindow_any_to_any = tk.Label(text=f"Your new amount is {newamount}")
+            intamount = int(newamount)
+
+            convert_from_usd_ccwindow_any_to_any = tk.Label(text=f"Your new amount is {intamount}")
             convert_from_usd_ccwindow_any_to_any.pack()
+
+            back_button_convert_any = tk.Button(root, text="Clear and go back", command=clear_screen_convert_any, **button_style)
+            back_button_convert_any.pack()
+
+            
+        
 
     def load_currency_data(self):
         logging.info('Starting: load_currency_data')
@@ -113,6 +142,12 @@ def hide_main_menu():
     CCwindow4.pack_forget()
     button.pack_forget()
     result_label.pack_forget()
+    
+def clear_screen():
+    convert_from_usd_ccwindow.pack_forget()
+    text_widget.pack_forget()
+    convert_from_usd_ccwindow_any_to_any.pack_forget()
+    convert_from_usd_ccwindow.pack_forget()
 
 def display_main_menu():
     entry.pack(pady=10)
@@ -133,25 +168,19 @@ def hide_currency_converter():
 
 def go_back_to_main():
     hide_currency_converter()
+    hide_currency_converter_any_to_any()
     display_main_menu()
 
 def currency_amount_any_to_any():
-    # first_convert_any_currencywindow0.pack()
-    # first_convert_any_currency.pack()
-    # last_convert_any_currencywindow1.pack()
-    # last_convert_any_currency.pack()
-    # input_for_currencywindow1_any_to_any.pack()
-    # input_amount_any_to_any.pack()
-    # convert_any_currency_button.pack()
-
     first_to_currency_value = first_convert_any_currency.get()
     last_to_currency_value = last_convert_any_currency.get()
     try:
         amount_value = int(input_amount_any_to_any.get())
         User1.convert_any_currency(first_to_currency=first_to_currency_value, last_to_currency = last_to_currency_value, amount=amount_value)
-        result_var.set(f"Converted {amount_value} {first_to_currency_value} to {last_to_currency_value} .")
+        result_var.set(f"Converted {amount_value} {first_to_currency_value} to {last_to_currency_value}.")
     except ValueError:
         result_var.set("Invalid amount!")
+    go_back_to_main()
 
 def currency_amount():
     logging.info('Starting: currency_amount')
@@ -169,13 +198,31 @@ def display_currency_converter():
     input_for_currencywindow1.pack()
     input_amount.pack()
     button_convert.pack()
-        
+
+def display_currency_converter_any_to_any():
+    first_convert_any_currencywindow0.pack()
+    first_convert_any_currency.pack()
+    last_convert_any_currencywindow1.pack()
+    last_convert_any_currency.pack()
+    input_for_currencywindow1_any_to_any.pack()
+    input_amount_any_to_any.pack()
+    convert_any_currency_button.pack()
+    User1.convert_any_currency(first_to_currency=first_convert_any_currency, last_to_currency=last_convert_any_currency, amount=input_amount_any_to_any)
+
+def hide_currency_converter_any_to_any():
+    first_convert_any_currencywindow0.pack_forget()
+    first_convert_any_currency.pack_forget()
+    last_convert_any_currencywindow1.pack_forget()
+    last_convert_any_currency.pack_forget()
+    input_for_currencywindow1_any_to_any.pack_forget()
+    input_amount_any_to_any.pack_forget()
+    convert_any_currency_button.pack_forget()
 
 def process_input():
     logging.info('Starting: process_input')
     inputCCstring = entry.get()
     input_amount_content = input_amount.get()
-    if inputCCstring == "10":
+    if inputCCstring == "q":
         root.quit()
     elif inputCCstring == "0":
         result_var.set(f"All currencies: " + ", ".join(User1.list_currencies()))
@@ -190,6 +237,7 @@ def process_input():
             return
         User1.convert_from_usd(to_currency=input_for_currency, amount=int_amount)
         result_var.set(f"Converted {input_amount_content} USD to {input_for_currency}.")
+        clear_screen()
     elif inputCCstring == "2":
         User1.fetch_currency_data()
         result_var.set("Data refreshed!")
@@ -197,28 +245,24 @@ def process_input():
         User1.export_to_json()
         result_var.set("Data exported!")
     elif inputCCstring == "4":
-        first_convert_any_currencywindow0.pack()
-        first_convert_any_currency.pack()
-        last_convert_any_currencywindow1.pack()
-        last_convert_any_currency.pack()
-        input_for_currencywindow1_any_to_any.pack()
-        input_amount_any_to_any.pack()
-        convert_any_currency_button.pack()
-        User1.export_to_json()
-        result_var.set("Data exported!")
+        hide_main_menu()
+        display_currency_converter_any_to_any()
+        result_var.set(f"Converted {input_amount_any_to_any} {first_convert_any_currency} to {last_convert_any_currency}.")
     else:
-        result_var.set("Please try again. Type 0, 1, 2, 3, 4 or 10.")
+        result_var.set("Please try again. Type 0, 1, 2, 3, 4 or q for exit.")
   
 root = tk.Tk()
 root.title("Python Currency Converter")
 
-root.geometry("500x400")
+root.geometry("500x600")
 root.configure(bg='#1a1a1a')  
 
+
+#style
 label_style = {
-    "bg": "#1a1a1a",  # background to match the root window
-    "fg": "#e6e6e6",  # Text color
-    "padx": 5,  # Padding
+    "bg": "#1a1a1a",  
+    "fg": "#e6e6e6",  
+    "padx": 5,  
     "pady": 5
 }
 
@@ -236,6 +280,8 @@ entry = tk.Entry(root, fg="black", bg="white", width=50, borderwidth=2, relief="
 
 #Extra 
 text_widget = tk.Text(root, height=5, wrap=tk.WORD)
+convert_from_usd_ccwindow = tk.Label()
+convert_from_usd_ccwindow_any_to_any = tk.Label()
 
 #window with everything
 CCwindow0 = tk.Label(root, text="[0] - List all currencies", **label_style)
